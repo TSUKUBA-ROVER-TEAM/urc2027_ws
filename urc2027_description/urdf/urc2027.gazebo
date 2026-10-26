@@ -1,0 +1,485 @@
+<?xml version="1.0"?>
+<robot name="urc2027" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:if value="$(arg enable_robot_hardware)">
+  <xacro:property name="body_color" value="Gazebo/Silver" />
+
+  <xacro:arg name="gazebo" default="ignition" />
+  <xacro:arg name="use_fake_hardware" default="false" />
+
+  <xacro:unless value="$(arg use_real_hardware)">
+  <ros2_control name="GazeboSimSystem" type="system">
+    <hardware>
+      <xacro:if value="$(arg use_fake_hardware)">
+        <plugin>mock_components/GenericSystem</plugin>
+      </xacro:if>
+      <xacro:unless value="$(arg use_fake_hardware)">
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </xacro:unless>
+    </hardware>
+    <joint name="drive_left_forward_joint">
+      <command_interface name="velocity">velocity</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="drive_right_forward_joint">
+      <command_interface name="velocity">velocity</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="drive_left_backward_joint">
+      <command_interface name="velocity">velocity</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="drive_right_backward_joint">
+      <command_interface name="velocity">velocity</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="steer_left_forward_joint">
+      <command_interface name="position">position</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="steer_right_forward_joint">
+      <command_interface name="position">position</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="steer_left_backward_joint">
+      <command_interface name="position">position</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="steer_right_backward_joint">
+      <command_interface name="position">position</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="arm_4_joint">
+      <command_interface name="position">position</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="arm_y_joint">
+      <command_interface name="velocity">velocity</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+    <joint name="gripper_joint">
+      <command_interface name="velocity">velocity</command_interface>
+      <state_interface name="position">position</state_interface>
+      <state_interface name="velocity">velocity</state_interface>
+    </joint>
+  </ros2_control>
+  </xacro:unless>
+
+  <xacro:if value="$(arg use_real_hardware)">
+    <xacro:unless value="$(arg drive_only)">
+      <xacro:include filename="$(find robstride_ros2_control)/description/robstride_motor_profiles.xacro"/>
+    </xacro:unless>
+    <ros2_control name="RobStrideSystem" type="system">
+      <hardware>
+        <xacro:if value="$(arg drive_only)">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="$(arg drive_only)">
+        <plugin>robstride_ros2/RobStrideSystem</plugin>
+        <param name="feedback_timeout_ms">500</param>
+        <param name="fail_on_feedback_timeout">true</param>
+        <param name="allow_partial_start">true</param>
+        <param name="managed_command_gate">true</param>
+        <param name="set_zero_on_activate">false</param>
+        <param name="startup_recovery_timeout_ms">5000</param>
+        <param name="run_mode_recovery_timeout_ms">5000</param>
+        </xacro:unless>
+      </hardware>
+      <xacro:unless value="$(arg drive_only)">
+      <joint name="arm_1_joint">
+        <!-- Skip CAN timeout setup: this motor returns status 1 for index 0x7028. -->
+        <xacro:robstride_rs03_params can_id="3" kp="30.0" kd="0.5" can_timeout_ticks="0"/>
+        <xacro:robstride_csp_params position_min="-50.0" position_max="50.0"
+          speed_limit="8.5" current_limit="5.0" torque_limit="5.0"/>
+        <xacro:robstride_joint_interfaces/>
+      </joint>
+      <joint name="arm_2_joint">
+        <xacro:robstride_rs04_params can_id="2" kp="50.0" kd="0.5"/>
+        <xacro:robstride_csp_params position_min="-12.466370614359172" position_max="12.466370614359172"
+          speed_limit="0.3" current_limit="10.0" torque_limit="10.0"/>
+        <xacro:robstride_joint_interfaces/>
+      </joint>
+      <joint name="arm_3_joint">
+        <xacro:robstride_rs02_params can_id="4" kp="30.0" kd="0.5"/>
+        <xacro:robstride_csp_params position_min="-12.466370614359172" position_max="12.466370614359172"
+          speed_limit="0.5" current_limit="1.0" torque_limit="2.0"/>
+        <xacro:robstride_joint_interfaces/>
+      </joint>
+      </xacro:unless>
+      <xacro:if value="$(arg drive_only)">
+        <xacro:macro name="mock_robstride_joint" params="name">
+          <joint name="${name}">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity" />
+          </joint>
+        </xacro:macro>
+        <xacro:mock_robstride_joint name="arm_1_joint" />
+        <xacro:mock_robstride_joint name="arm_2_joint" />
+        <xacro:mock_robstride_joint name="arm_3_joint" />
+      </xacro:if>
+    </ros2_control>
+
+    <ros2_control name="ITRSwerveSystem" type="system">
+      <hardware>
+        <xacro:if value="${xacro.arg('arm_only') in ['true', 'True', '1'] and xacro.arg('drive_only') not in ['true', 'True', '1']}">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="${xacro.arg('arm_only') in ['true', 'True', '1'] and xacro.arg('drive_only') not in ['true', 'True', '1']}">
+          <plugin>itr_can_hardware/ItrCanHardware</plugin>
+        </xacro:unless>
+        <param name="can_interface">$(arg itr_can_interface)</param>
+      </hardware>
+
+      <xacro:macro name="robomas_wheel" params="joint module_id">
+        <joint name="${joint}">
+          <param name="board_type">robomas</param>
+          <param name="board_id">$(arg robomas_board_id)</param>
+          <param name="module_id">${module_id}</param>
+          <param name="command_mode">velocity</param>
+          <!-- Convert wheel rad/s to motor rpm. -->
+          <param name="velocity_scale">${float(xacro.arg('drive_gear_ratio')) * 60.0 / (2.0 * pi)}</param>
+          <param name="position_scale">${float(xacro.arg('drive_gear_ratio')) / (2.0 * pi)}</param>
+          <param name="current_limit">10000.0</param>
+          <param name="velocity_kp">0.0002</param>
+          <command_interface name="velocity" />
+          <state_interface name="position" />
+          <state_interface name="velocity" />
+        </joint>
+      </xacro:macro>
+
+      <xacro:macro name="steering_servo" params="joint module_id">
+        <joint name="${joint}">
+          <param name="board_type">servo</param>
+          <param name="board_id">$(arg servo_board_id)</param>
+          <param name="module_id">${module_id}</param>
+          <!-- 270-degree servo. 0 rad is center and +/- 3*pi/4 maps to 0..255. -->
+          <param name="position_scale">${255.0 / (1.5 * pi)}</param>
+          <param name="position_offset">127.5</param>
+          <command_interface name="position" />
+          <state_interface name="position" />
+        </joint>
+      </xacro:macro>
+
+      <!-- U3 / FDCAN1: ESC IDs 1..4, in front-left/front-right/rear-left/rear-right order. -->
+      <xacro:robomas_wheel joint="drive_left_forward_joint" module_id="1" />
+      <xacro:robomas_wheel joint="drive_right_forward_joint" module_id="2" />
+      <xacro:robomas_wheel joint="drive_left_backward_joint" module_id="3" />
+      <xacro:robomas_wheel joint="drive_right_backward_joint" module_id="4" />
+      <xacro:steering_servo joint="steer_left_forward_joint" module_id="1" />
+      <xacro:steering_servo joint="steer_right_forward_joint" module_id="2" />
+      <xacro:steering_servo joint="steer_left_backward_joint" module_id="3" />
+      <xacro:steering_servo joint="steer_right_backward_joint" module_id="4" />
+
+      <joint name="arm_y_joint">
+        <param name="board_type">robomas</param>
+        <param name="board_id">$(arg robomas_board_id)</param>
+        <param name="module_id">5</param>
+        <param name="command_mode">velocity</param>
+        <!-- arm_y teleop publishes the target directly in motor rpm. -->
+        <param name="velocity_scale">1.0</param>
+        <param name="current_limit">10000.0</param>
+        <param name="velocity_kp">0.0002</param>
+        <command_interface name="velocity" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+      <joint name="arm_4_joint">
+        <param name="board_type">robomas</param>
+        <param name="board_id">$(arg robomas_board_id)</param>
+        <param name="module_id">13</param>
+        <param name="command_mode">position</param>
+        <param name="position_scale">1.0</param>
+        <param name="velocity_limit">50.0</param>
+        <param name="current_limit">10000.0</param>
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+      <joint name="gripper_joint">
+        <param name="board_type">robomas</param>
+        <param name="board_id">$(arg robomas_board_id)</param>
+        <param name="module_id">6</param>
+        <param name="command_mode">velocity</param>
+        <param name="velocity_scale">1.0</param>
+        <param name="current_limit">10000.0</param>
+        <param name="velocity_kp">0.0002</param>
+        <command_interface name="velocity" />
+        <state_interface name="position" />
+      </joint>
+    </ros2_control>
+  </xacro:if>
+
+  <xacro:unless value="$(arg use_fake_hardware)">
+    <xacro:unless value="$(arg use_real_hardware)">
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find urc2027_gazebo)/config/gz_ros2_control.yaml</parameters>
+      </plugin>
+    </gazebo>
+    </xacro:unless>
+  </xacro:unless>
+
+  <gazebo reference="base_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+    <gravity>true</gravity>
+  </gazebo>
+
+  <gazebo reference="wheel_right_forward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="steer_right_forward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="wheel_right_backward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="steer_right_backward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="leg_right_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="wheel_left_forward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="steer_left_forward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="wheel_left_backward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="steer_left_backward_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="leg_left_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="arm_1_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+    <gravity>true</gravity>
+  </gazebo>
+
+  <gazebo reference="hand_right_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="hand_left_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="arm_4_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="arm_3_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="arm_2_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="arm_3_rotate_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="arm_3_shaft_link">
+    <material>${body_color}</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>1</always_on>
+      <update_rate>10</update_rate>
+      <visualize>true</visualize>
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="base_scan">
+    <sensor name='gpu_lidar' type='gpu_lidar'>
+      <gz_frame_id>base_scan</gz_frame_id>
+      <topic>scan</topic>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>640</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14</min_angle>
+            <max_angle>3.14</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>1</samples>
+            <resolution>0.01</resolution>
+            <min_angle>0</min_angle>
+            <max_angle>0</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.08</min>
+          <max>10.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </ray>
+      <always_on>1</always_on>
+      <visualize>true</visualize>
+      <intensity>
+        <visualize>true</visualize>
+        <enabled>true</enabled>
+        <topic>intensity</topic>
+      </intensity>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="camera_link">
+    <sensor name="rgb_camera" type="camera">
+      <gz_frame_id>camera_link</gz_frame_id>
+      <topic>rgbd_camera/color_image</topic>
+      <update_rate>10.0</update_rate>
+      <visualize>true</visualize>
+      <camera name="urc2027_camera">
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>100</far>
+        </clip>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="camera_link">
+    <sensor name="depth_camera" type="depth_camera">
+      <gz_frame_id>camera_link</gz_frame_id>
+      <topic>rgbd_camera/depth_image</topic>
+      <update_rate>10.0</update_rate>
+      <visualize>true</visualize>
+      <camera name="urc2027_camera">
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>100</far>
+        </clip>
+      </camera>
+    </sensor>
+  </gazebo>
+  </xacro:if>
+
+  <xacro:property name="odrive_trap_vel_limit" value="314.159265359"/>
+  <xacro:property name="odrive_trap_accel_limit" value="3141.59265359"/>
+  <xacro:property name="odrive_trap_decel_limit" value="3141.59265359"/>
+
+  <xacro:if value="$(arg use_odrive_launcher)">
+    <xacro:if value="$(arg use_real_hardware)">
+      <ros2_control name="ODriveLauncherSystem" type="system">
+        <hardware>
+          <plugin>odrive_ros2_control_plugin/ODriveHardwareInterface</plugin>
+          <param name="can">$(arg odrive_can_interface)</param>
+        </hardware>
+        <joint name="launcher_joint">
+          <param name="node_id">$(arg odrive_node_id)</param>
+          <param name="index_search_on_activate">true</param>
+          <param name="trap_vel_limit">${odrive_trap_vel_limit}</param>
+          <param name="trap_accel_limit">${odrive_trap_accel_limit}</param>
+          <param name="trap_decel_limit">${odrive_trap_decel_limit}</param>
+          <command_interface name="position"/>
+          <command_interface name="velocity"/>
+          <command_interface name="effort"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+      </ros2_control>
+    </xacro:if>
+  </xacro:if>
+
+</robot>

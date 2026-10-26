@@ -1,4 +1,4 @@
-# SRC2026 workspace
+# URC2027 workspace
 
 ROS 2 Jazzy / Ubuntu 24.04 向けのロボット制御ワークスペースです。
 
@@ -50,11 +50,11 @@ ODriveは `use_odrive_launcher` で個別に有効化します。
 
 ## CAN接続
 
-| 接続先 | 既定インターフェース | 設定引数 |
-|---|---|---|
-| ITR基板 | `can0` | `itr_can_interface` |
-| RobStride | `can1` | `robstride_can_interface` |
-| ODrive（node ID 0） | `can1` | `odrive_can_interface`、`odrive_node_id` |
+| 接続先              | 既定インターフェース | 設定引数                                 |
+| ------------------- | -------------------- | ---------------------------------------- |
+| ITR基板             | `can0`               | `itr_can_interface`                      |
+| RobStride           | `can1`               | `robstride_can_interface`                |
+| ODrive（node ID 0） | `can1`               | `odrive_can_interface`、`odrive_node_id` |
 
 RobStrideとODriveはClassic CAN・1 Mbpsで同じバスを共有します。
 RobStrideは29bit拡張フレーム、ODriveは11bit標準フレームのCANSimpleを使います。
@@ -69,14 +69,14 @@ IDは左前・右前・左後・右後の順に1・2・3・4です。基板IDの
 
 添字は `/joy` の `axes` / `buttons` の0始まりです。
 
-| 操作 | 入力 |
-|---|---|
-| 前後・左右・旋回 | `axes[4]`・`axes[3]`・`axes[0]` |
-| arm_1 / arm_2 / arm_3 | 対応する `buttons[1]` / `[2]` / `[3]` を1つ押しながら `axes[7]` |
-| arm_y | `axes[6]` |
-| arm_4 正方向・負方向 | `axes[2]`・`axes[5]` |
-| グリッパー正方向・負方向 | `buttons[4]`・`buttons[5]` |
-| ODrive射出 | `buttons[8]` |
+| 操作                     | 入力                                                            |
+| ------------------------ | --------------------------------------------------------------- |
+| 前後・左右・旋回         | `axes[4]`・`axes[3]`・`axes[0]`                                 |
+| arm_1 / arm_2 / arm_3    | 対応する `buttons[1]` / `[2]` / `[3]` を1つ押しながら `axes[7]` |
+| arm_y                    | `axes[6]`                                                       |
+| arm_4 正方向・負方向     | `axes[2]`・`axes[5]`                                            |
+| グリッパー正方向・負方向 | `buttons[4]`・`buttons[5]`                                      |
+| ODrive射出               | `buttons[8]`                                                    |
 
 ODriveはノード起動後の最初の有効な押下で **0 radへ移動** し、
 到達後の次の押下から **10回転（20π rad）** ずつ進めます。
@@ -118,8 +118,8 @@ just test
 just format
 ```
 
-CAN ID・減速比・制御上限は `src2026_description/urdf/`、
-コントローラ設定は `src2026_bringup/config/`、外部依存は `build_depends.repos` にあります。
+CAN ID・減速比・制御上限は `urc2027_description/urdf/`、
+コントローラ設定は `urc2027_bringup/config/`、外部依存は `build_depends.repos` にあります。
 実機アームへの外部位置指令は `/arm_position_controller/position_targets` を使い、
 Recovery Managerを介して送ってください。
 

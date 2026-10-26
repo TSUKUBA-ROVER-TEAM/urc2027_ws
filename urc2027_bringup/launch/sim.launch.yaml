@@ -1,0 +1,37 @@
+launch:
+  - arg:
+      name: "namespace"
+      default: ""
+      description: "Top-level namespace"
+  - arg:
+      name: "use_sim_time"
+      default: "true"
+      description: "Use the Gazebo simulation clock"
+  - arg:
+      name: "headless"
+      default: "false"
+      description: "Run without the Gazebo GUI"
+  - arg:
+      name: "world"
+      default: "$(find-pkg-share urc2027_gazebo)/worlds/empty.sdf"
+      description: "World file to load"
+  - arg:
+      name: "robot_name"
+      default: "urc2027"
+      description: "Spawned robot name"
+  - arg:
+      name: "robot_sdf"
+      default: "$(find-pkg-share urc2027_description)/urdf/urc2027.xacro"
+      description: "Robot xacro file"
+  - include:
+      file: "$(find-pkg-share urc2027_gazebo)/launch/spawn.launch.py"
+      arg:
+        - {name: "namespace", value: "$(var namespace)"}
+        - {name: "use_sim_time", value: "$(var use_sim_time)"}
+        - {name: "headless", value: "$(var headless)"}
+        - {name: "world", value: "$(var world)"}
+        - {name: "robot_name", value: "$(var robot_name)"}
+        - {name: "robot_sdf", value: "$(var robot_sdf)"}
+
+  - include:
+      file: "$(find-pkg-share urc2027_manual)/launch/teleop.launch.yaml"

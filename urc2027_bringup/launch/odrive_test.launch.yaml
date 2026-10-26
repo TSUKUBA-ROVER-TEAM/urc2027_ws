@@ -1,0 +1,40 @@
+launch:
+
+  - arg:
+      name: "odrive_can_interface"
+      default: "can1"
+
+  - arg:
+      name: "odrive_node_id"
+      default: "0"
+
+  - node:
+      pkg: robot_state_publisher
+      exec: robot_state_publisher
+      output: screen
+      param:
+        - name: robot_description
+          value: "$(command 'xacro $(find-pkg-share urc2027_description)/urdf/urc2027.xacro use_real_hardware:=true enable_robot_hardware:=false use_odrive_launcher:=true odrive_can_interface:=$(var odrive_can_interface) odrive_node_id:=$(var odrive_node_id)')"
+
+  - node:
+      pkg: controller_manager
+      exec: ros2_control_node
+      output: screen
+      param:
+        - from: "$(find-pkg-share urc2027_bringup)/config/odrive_trap_controller.yaml"
+      remap:
+        - from: "~/robot_description"
+          to: "/robot_description"
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      args: "joint_state_broadcaster -c /controller_manager"
+      output: screen
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      args: "launcher_controller -c /controller_manager"
+      output: screen
+

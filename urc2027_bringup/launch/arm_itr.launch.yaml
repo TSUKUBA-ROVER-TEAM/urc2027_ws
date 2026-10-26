@@ -1,0 +1,23 @@
+launch:
+  - arg:
+      name: itr_can_interface
+      default: can0
+  - arg:
+      name: robstride_can_interface
+      default: can1
+
+  - include:
+      file: $(find-pkg-share urc2027_bringup)/launch/real.launch.yaml
+      arg:
+        - name: launcher_only
+          value: 'false'
+        - name: arm_only
+          value: 'false'
+        - name: drive_only
+          value: 'false'
+        - name: use_odrive_launcher
+          value: 'false'
+        - name: itr_can_interface
+          value: $(var itr_can_interface)
+        - name: robstride_can_interface
+          value: $(var robstride_can_interface)

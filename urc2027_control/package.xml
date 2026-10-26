@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>urc2027_control</name>
+  <version>0.0.0</version>
+  <description>RobStride recovery management.</description>
+  <maintainer email="kengo171227@gmail.com">kengo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>controller_manager_msgs</exec_depend>
+  <exec_depend>robstride_ros2_control</exec_depend>
+  <exec_depend>lifecycle_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

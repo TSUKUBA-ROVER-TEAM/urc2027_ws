@@ -1,0 +1,138 @@
+launch:
+  - arg:
+      name: launcher_only
+      default: 'false'
+      description: Use only ODrive and gamepad control; takes precedence over arm_only and drive_only
+  - arg:
+      name: arm_only
+      default: 'false'
+      description: Use real RobStride motors and mock all ITR joints without sending ITR CAN FD traffic
+  - arg:
+      name: drive_only
+      default: 'false'
+      description: Use real ITR hardware and mock RobStride motors; takes precedence over arm_only
+  - arg:
+      name: itr_can_interface
+      default: can0
+      description: SocketCAN interface used by itr_can_hardware
+
+  - arg:
+      name: robstride_can_interface
+      default: can1
+      description: SocketCAN interface used by the RobStride bridge
+
+  - arg:
+      name: use_odrive_launcher
+      default: 'false'
+  - arg:
+      name: odrive_can_interface
+      default: can1
+  - arg:
+      name: odrive_node_id
+      default: '0'
+
+  - let:
+      name: enable_robot_hardware
+      value: $(eval "'$(var launcher_only)'.lower() not in ('true', '1')")
+  - let:
+      name: enable_robstride
+      value: $(eval "'$(var launcher_only)'.lower() not in ('true', '1') and '$(var drive_only)'.lower() not in ('true', '1')")
+  - let:
+      name: enable_odrive_launcher
+      value: $(eval "'$(var launcher_only)'.lower() in ('true', '1') or '$(var use_odrive_launcher)'.lower() in ('true', '1')")
+
+  - node:
+      pkg: controller_manager
+      exec: ros2_control_node
+      name: controller_manager
+      output: screen
+      param:
+        - name: robot_description
+          value: $(command 'xacro $(find-pkg-share urc2027_description)/urdf/urc2027.xacro use_real_hardware:=true arm_only:=$(var arm_only) drive_only:=$(var drive_only) itr_can_interface:=$(var itr_can_interface) enable_robot_hardware:=$(var enable_robot_hardware) use_odrive_launcher:=$(var enable_odrive_launcher) odrive_can_interface:=$(var odrive_can_interface) odrive_node_id:=$(var odrive_node_id)')
+        - from: $(find-pkg-share urc2027_bringup)/config/real_controllers.yaml
+
+  - node:
+      pkg: robot_state_publisher
+      exec: robot_state_publisher
+      name: robot_state_publisher
+      output: screen
+      param:
+        - name: robot_description
+          value: $(command 'xacro $(find-pkg-share urc2027_description)/urdf/urc2027.xacro use_real_hardware:=true arm_only:=$(var arm_only) drive_only:=$(var drive_only) itr_can_interface:=$(var itr_can_interface) enable_robot_hardware:=$(var enable_robot_hardware) use_odrive_launcher:=$(var enable_odrive_launcher) odrive_can_interface:=$(var odrive_can_interface) odrive_node_id:=$(var odrive_node_id)')
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      name: joint_state_broadcaster_spawner
+      output: screen
+      args: joint_state_broadcaster -c /controller_manager
+
+  - include:
+      if: $(var enable_robstride)
+      file: $(find-pkg-share ros2_socketcan)/launch/socket_can_bridge.launch.xml
+      arg:
+        - name: interface
+          value: $(var robstride_can_interface)
+        - name: receiver_interval_sec
+          value: '0.05'
+
+  - node:
+      pkg: controller_manager
+      exec: hardware_spawner
+      name: robstride_hardware_spawner
+      if: $(var enable_robstride)
+      output: screen
+      args: RobStrideSystem --controller-manager /controller_manager --activate
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      name: arm_position_controller_spawner
+      if: $(var enable_robstride)
+      output: screen
+      args: arm_position_controller -c /controller_manager --inactive
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      name: arm_4_position_controller_spawner
+      if: $(eval "'$(var enable_robot_hardware)'.lower() in ('true', '1') and '$(var drive_only)'.lower() in ('true', '1')")
+      output: screen
+      args: arm_4_position_controller -c /controller_manager
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      name: itr_swerve_controller_spawner
+      if: $(var enable_robot_hardware)
+      output: screen
+      args: itr_swerve_controller -c /controller_manager
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      name: arm_velocity_controller_spawner
+      if: $(var enable_robot_hardware)
+      output: screen
+      args: arm_velocity_controller -c /controller_manager
+
+  - include:
+      file: $(find-pkg-share urc2027_manual)/launch/teleop.launch.yaml
+      arg:
+        - name: arm_4_only
+          value: $(eval "'$(var enable_robot_hardware)'.lower() in ('true', '1') and '$(var drive_only)'.lower() in ('true', '1')")
+
+  - node:
+      pkg: urc2027_control
+      exec: recovery_manager.py
+      name: robstride_recovery_manager
+      if: $(var enable_robstride)
+      output: screen
+
+  - node:
+      pkg: controller_manager
+      exec: spawner
+      name: launcher_controller_spawner
+      if: $(var enable_odrive_launcher)
+      output: screen
+      args: launcher_controller -c /controller_manager
